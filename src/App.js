@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Route, Switch, Redirect } from "react-router-dom";
 
-//Toasts
+// Toasts
 import { ToastContainer, toast, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { deleteToast } from "./utils/toasts";
 
-// layout
+// Layout
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./components/Footer";
 import PreLoader from "./pages/PreLoader";
 import Breadcrumb from "./components/breadcrumb";
-import SearchBar from "./components/SearchBar";
 
 // Pages
 import HomePage from "./pages/Home";
@@ -20,32 +19,28 @@ import ShopDetailsPage from "./pages/ShopDetails";
 import ShopCartPage from "./pages/ShoppingCart";
 import CheckoutPage from "./pages/Checkout";
 import LoginRegisterPage from "./pages/LoginRegister";
+import ErrorPage from "./pages/Error";
 
+// Services
 import auth from "./services/authService";
 
 //AppContext state
 import { AppContextProvider } from "./contexts/AppContext";
 
-// seed data
-import { seed } from "./seeder";
-
 export default function App() {
   const [user, setUser] = useState(auth.getCurrentUser());
   useEffect(() => {
-    /* const loaded = localStorage.getItem("load");
-    !loaded && seed();
     const toastMsg = localStorage.getItem("toast");
     if (toast) {
       setTimeout(() => {
         toast(toastMsg);
         deleteToast();
       }, 1000);
-    }*/
+    }
   }, []);
   return (
     <AppContextProvider>
-      <Navbar />
-      <SearchBar />
+      <Navbar user={user} />
       <Breadcrumb />
       <ToastContainer
         position="top-center"
@@ -58,7 +53,6 @@ export default function App() {
         draggable
       />
       <PreLoader />
-
       <main>
         <Switch>
           <Route path="/login" exact component={LoginRegisterPage} />
@@ -71,6 +65,7 @@ export default function App() {
           />
           <Route path="/shopping-cart" exact component={ShopCartPage} />
           <Route path="/checkout" exact component={CheckoutPage} />
+          <Route path="/error" exact component={ErrorPage} />
           <Route
             path="/not-found"
             exact

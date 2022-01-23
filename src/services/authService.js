@@ -3,13 +3,14 @@ import jwtDecode from "jwt-decode";
 import { refresh } from "../utils/refresh";
 
 const apiEndpoint = "/login";
-const tokenKey = "x-auth-token";
+const tokenKey = "Authorization";
 
 http.setJwt(getJwt());
 
 const login = async ({ username, password }) => {
+  console.log(username + "  " + password);
   const { data: jwt } = await http.post(apiEndpoint, { username, password });
-  localStorage.setItem(tokenKey, jwt);
+  localStorage.setItem(tokenKey, jwt.token);
 };
 
 const logout = () => {
@@ -20,7 +21,7 @@ const getCurrentUser = () => {
   try {
     const jwt = localStorage.getItem(tokenKey);
     if (jwtDecode(jwt).exp < Date.now() / 1000) {
-      localStorage.removeItem("x-auth-token");
+      localStorage.removeItem("Authorization");
       refresh("/");
     }
 

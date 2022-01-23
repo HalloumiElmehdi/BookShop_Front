@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, Fragment } from "react";
 
 import { getBooks } from "../services/bookService";
 
@@ -7,40 +7,63 @@ import {
   getShoppingCartTotal,
   updateCartBooks,
 } from "../services/shoppingCartService";
-import {
-  getFavouritesBooks,
-  updateFavouritesBooks,
-} from "../services/favouritesService";
+
 import { Link } from "react-router-dom";
 import Pagination, { paginate } from "../components/common/pagination";
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 
-const PER_PAGE = 4;
-export default function Books() {
+const PER_PAGE = 8;
+
+export default function Shop() {
   const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
-  const [favouritesBooks, setFavouritesBooks] = useState([]);
+  const [keyWord, setKeyword] = useState("");
   const [books, setBooks] = useState([]);
-  const [page, setPage] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [state, setState] = useContext(AppContext);
 
   useEffect(() => {
     async function fetchBooks() {
       const { data } = await getBooks();
       setBooks(data);
+      setFiltered(paginate(data, 0, PER_PAGE));
     }
     fetchBooks();
-    setPage(paginate(books, 1, PER_PAGE));
-    setBooks(page);
     setShoppingCartBooks(getCartBooks());
-    setFavouritesBooks(getFavouritesBooks());
   }, []);
 
   function handlePageClick({ selected: page }) {
-    setBooks(paginate(books, page, PER_PAGE));
+    setFiltered(paginate(books, page, PER_PAGE));
   }
 
+  const filterByTitle = (title) =>
+    title.trim().toLowerCase().includes(keyWord.trim().toLowerCase());
+
+  const filterByAuthor = (author) =>
+    author.trim().toLowerCase().includes(keyWord.trim().toLowerCase());
+
+  const handleSearch = (keyWord) => {
+    setKeyword(keyWord);
+    const filteredBooks = books.filter(
+      (book) => filterByTitle(book.title) || filterByAuthor(book.author)
+    );
+
+    setFiltered(paginate(filteredBooks, 0, PER_PAGE));
+  };
+
   const handleAddToCart = (book) => {
+    if (!book.stock > 0) {
+      toast.error("product is out of stock", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
     const found = shoppingCartBooks.find((b) => b.id === book.id);
     if (!found) {
       book.quantity = 1;
@@ -49,7 +72,6 @@ export default function Books() {
       //update cart badge
       setState({
         shoppingCartCount: state.shoppingCartCount + 1,
-        favouritesBooksCount: state.favouritesBooksCount,
         shoppingCartTotal: getShoppingCartTotal(),
       });
       //
@@ -57,102 +79,113 @@ export default function Books() {
     } else toast.error(`book exist already in your cart !`);
   };
 
-  const handleAddToFavourites = (book) => {
-    const found = favouritesBooks.find((p) => p._id === book._id);
-    if (!found) {
-      book.quantity = 1;
-      favouritesBooks.push(book);
-      updateFavouritesBooks(favouritesBooks);
-      //update cart badge
-      setState({
-        favouritesBooksCount: state.favouritesBooksCount + 1,
-        shoppingCartCount: state.shoppingCartCount,
-        shoppingCartTotal: getShoppingCartTotal(),
-      });
-      //
-      toast.success(`book added to favourites !`);
-    } else toast.error(`book exist already in your favourites !`);
-  };
-
   return (
-    <section className="book spad">
-      <div className="container">
-        <div className="row">
-          <div className="col-lg-12 col-md-7">
-            <div className="filter__item">
-              <div className="row">
-                <div className="col-lg-4 col-md-5">
-                  <div className="filter__sort">
-                    <span>Sort By</span>
-                  </div>
+    <Fragment>
+      <section className="book spad">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-9">
+              <div className="hero__search">
+                <div className="hero__search__form">
+                  <form>
+                    <div className="hero__search__categories">
+                      Search
+                      <span className="arrow_carrot-down"></span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="What do yo u need?"
+                      value={keyWord}
+                      onChange={({ target }) => handleSearch(target.value)}
+                    />
+                  </form>
                 </div>
-                <div className="col-lg-4 col-md-4">
-                  <div className="filter__found">
-                    <h6>
-                      <span>{books.length}</span> Books found
-                    </h6>
+                <div className="hero__search__phone">
+                  <div className="hero__search__phone__icon">
+                    <i className="fa fa-phone"></i>
                   </div>
-                </div>
-                <div className="col-lg-4 col-md-3">
-                  <div className="filter__option">
-                    <span className="icon_grid-2x2" />
-                    <span className="icon_ul" />
+                  <div className="hero__search__phone__text">
+                    <h5>+65 11.188.888</h5>
+                    <span>support 24/7 time</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="row">
-              {books.map((book) => (
-                <div className="col-lg-3 col-md-4 col-sm-6" key={book.id}>
-                  <div className="featured__item">
-                    <div
-                      className="featured__item__pic "
-                      style={{
-                        backgroundImage: "url('" + book.image + "')",
-                        backgroundRepeat: "no-repeat",
-                      }}
-                    >
-                      <ul className="featured__item__pic__hover">
-                        <li
-                          onClick={() => handleAddToFavourites(book)}
-                          className="cursor_pointer"
-                        >
-                          <a>
-                            <i className="fa fa-heart"></i>
-                          </a>
-                        </li>
-                        <li>
-                          <Link to={"/shopping-details/" + book.id}>
-                            <i className="fa fa-retweet"></i>
-                          </Link>
-                        </li>
-                        <li
-                          onClick={() => handleAddToCart(book)}
-                          className="cursor_pointer"
-                        >
-                          <a>
-                            <i className="fa fa-shopping-cart"></i>
-                          </a>
-                        </li>
-                      </ul>
+          </div>
+          <div className="row">
+            <div className="col-lg-12 col-md-7">
+              <div className="filter__item">
+                <div className="row">
+                  <div className="col-lg-4 col-md-5">
+                    <div className="filter__sort">
+                      <span>Sort By</span>
                     </div>
-                    <div className="featured__item__text">
+                  </div>
+                  <div className="col-lg-4 col-md-4">
+                    <div className="filter__found">
                       <h6>
-                        <Link to="/">
-                          {book.title}
-                          <br />
-                        </Link>
+                        <span>{filtered.length}</span> Book(s) found
                       </h6>
-                      <h5>${book.price}</h5>
+                    </div>
+                  </div>
+                  <div className="col-lg-4 col-md-3">
+                    <div className="filter__option">
+                      <span className="icon_grid-2x2" />
+                      <span className="icon_ul" />
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
+              <div className="row">
+                {filtered.map((book) => (
+                  <div className="col-lg-3 col-md-4 col-sm-6" key={book.id}>
+                    <div className="featured__item">
+                      <div
+                        className="featured__item__pic "
+                        style={{
+                          backgroundImage: "url('" + book.image + "')",
+                          backgroundRepeat: "no-repeat",
+                        }}
+                      >
+                        <ul className="featured__item__pic__hover">
+                          <li className="cursor_pointer">
+                            <a>
+                              <i className="fa fa-heart"></i>
+                            </a>
+                          </li>
+                          <li>
+                            <Link to={"/shopping-details/" + book.id}>
+                              <i className="fa fa-retweet"></i>
+                            </Link>
+                          </li>
+                          <li
+                            onClick={() => handleAddToCart(book)}
+                            className="cursor_pointer"
+                          >
+                            <a>
+                              <i className="fa fa-shopping-cart"></i>
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="featured__item__text">
+                        <h6>
+                          <Link to="/">
+                            {book.title}
+                            <br />
+                          </Link>
+                        </h6>
+                        <h5>${book.price}</h5>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Pagination onPageChange={handlePageClick} />
             </div>
-            <Pagination onPageChange={handlePageClick} />
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </Fragment>
   );
 }

@@ -40,7 +40,7 @@ export default function WebNav() {
                 </div>
                 {state.user && (
                   <div className="header__top__right__language">
-                    <div>{state.user.email}</div>
+                    <div>{state.user.username}</div>
                     <span className="arrow_carrot-down"></span>
                     <ul>
                       <li>
@@ -106,15 +106,6 @@ export default function WebNav() {
           <div className="col-lg-2">
             <div className="header__cart">
               <ul>
-                <li>
-                  <Link to="/favourites">
-                    <i
-                      className="fa fa-heart fa-lg fa-beat"
-                      title="Go to My Favourites"
-                    ></i>{" "}
-                    <span>{state.favouritesProductsCount}</span>
-                  </Link>
-                </li>
                 <li>
                   <Link to="/shopping-cart">
                     <i

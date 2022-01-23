@@ -13,6 +13,7 @@ class Form extends Component {
       abortEarly: false,
     };
     const { error } = Joi.validate(this.state.data, this.schema, options);
+
     if (!error) return null;
 
     const errors = {};
@@ -65,9 +66,9 @@ class Form extends Component {
   renderSubmitBtn = (label, isloading) => {
     return (
       <button
-        type=""
         className="btn btn-primary col-sm-12"
         disabled={this.validate() || isloading}
+        onClick={() => this.doSubmit()}
       >
         {isloading ? <i className="fa fa-spinner fa-pulse"></i> : label}
       </button>

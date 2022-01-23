@@ -5,10 +5,7 @@ import {
   getShoppingCartTotal,
   updateCartBooks,
 } from "../services/shoppingCartService";
-import {
-  getFavouritesBooks,
-  updateFavouritesBooks,
-} from "../services/favouritesService";
+
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 import { getBookById } from "../services/bookService";
@@ -18,19 +15,34 @@ export default function ShopDetails() {
   const bookID = pathname.split("/")[2];
   const [book, setBook] = useState();
   const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
-  const [favouritesBooks, setfavouritesBooks] = useState([]);
   const [state, setState] = useContext(AppContext);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     setShoppingCartBooks(getCartBooks());
-    setfavouritesBooks(getFavouritesBooks());
-    setBook(getBookById(bookID));
+    async function fetchBook() {
+      const { data } = await getBookById(bookID);
+      setBook(data);
+    }
+    fetchBook();
+
+    console.log(book);
   }, []);
 
   const handleAddToCart = (book) => {
+    if (!book.stock > 0) {
+      toast.error("product is out of stock", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
     const found = shoppingCartBooks.find((b) => b.id === book.id);
-
     if (!found) {
       book.quantity = quantity;
       shoppingCartBooks.push(book);
@@ -44,23 +56,6 @@ export default function ShopDetails() {
       //
       toast.success(`Product added to your cart !`);
     } else toast.error(`Product exist already in your cart !`);
-  };
-
-  const handleAddToFavourites = (book) => {
-    const found = favouritesBooks.find((b) => b.id === book.id);
-    if (!found) {
-      book.quantity = 1;
-      favouritesBooks.push(book);
-      updateFavouritesBooks(favouritesBooks);
-      //update cart badge
-      setState({
-        favouritesBooksCount: state.favouritesBooksCount + 1,
-        shoppingCartCount: state.shoppingCartCount,
-        shoppingCartTotal: getShoppingCartTotal(),
-      });
-      //
-      toast.success(`Product added to favourites !`);
-    } else toast.error(`Product exist already in your favourites !`);
   };
 
   return (
@@ -118,15 +113,17 @@ export default function ShopDetails() {
               >
                 ADD TO CARD
               </a>
-              <a
-                onClick={() => handleAddToFavourites(book)}
-                className="heart-icon cursor_pointer"
-              >
+              <a className="heart-icon cursor_pointer">
                 <span className="icon_heart_alt" />
               </a>
               <ul>
                 <li>
-                  <b>Availability</b> <span>In Stock</span>
+                  <b>Availability</b>{" "}
+                  {book && book.stock > 0 ? (
+                    <span>In Stock</span>
+                  ) : (
+                    <span style={{ color: "red" }}>Out of Stock</span>
+                  )}
                 </li>
                 <li>
                   <b>Shipping</b>{" "}

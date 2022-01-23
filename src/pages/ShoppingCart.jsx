@@ -66,7 +66,10 @@ export default function ShoppingCart() {
                     shoppingCartBooks.map((book) => (
                       <tr key={book.id}>
                         <td className="shoping__cart__item">
-                          <img src={book.smallimage} alt="" />
+                          <Link to={`/shopping-details/${book.id}`}>
+                            <img src={book.smallimage} alt="" />
+                          </Link>
+
                           <h5>{book.title}</h5>
                         </td>
                         <td className="shoping__cart__price">${book.price}</td>

@@ -6,69 +6,50 @@ import {
 } from "../services/shoppingCartService";
 
 import { getBooks } from "../services/bookService";
-import { updateFavouritesBooks } from "../services/favouritesService";
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 
 export default function Home() {
   const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
-  const [favouritesBooks, setFavouritesBooks] = useState([]);
   const [books, setBooks] = useState([]);
 
   const [state, setState] = useContext(AppContext);
   useEffect(() => {
     async function fetchBooks() {
       const { data } = await getBooks();
-      console.log(data);
-      setBooks(data);
+      const featured = data.slice(0, 8);
+      setBooks(featured);
     }
     fetchBooks();
   }, []);
 
-  useEffect(() => {
-    async function fetchBooks() {
-      const { data } = await getBooks();
-      console.log("data fetched ... ", data);
-      setBooks(data.slice(0, 12));
+  const handleAddToCart = (book) => {
+    if (!book.stock > 0) {
+      toast.error("product is out of stock", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
     }
-    fetchBooks();
-  }, []);
-
-  const handleAddToCart = (product) => {
-    const found = shoppingCartBooks.find((p) => p._id === product._id);
+    const found = shoppingCartBooks.find((b) => b.id === book.id);
 
     if (!found) {
-      product.quantity = 1;
-      shoppingCartBooks.push(product);
+      book.quantity = 1;
+      shoppingCartBooks.push(book);
       updateCartBooks(shoppingCartBooks);
       //update cart badge
       setState({
         shoppingCartCount: state.shoppingCartCount + 1,
-        favouritesBooksCount: state.favouritesBooksCount,
         shoppingCartTotal: getShoppingCartTotal(),
-        coupon: state.coupon,
       });
       //
       toast.success(`Product added to your cart !`);
     } else toast.error(`Product exist already in your cart !`);
-  };
-
-  const handleAddToFavourites = (product) => {
-    const found = favouritesBooks.find((p) => p._id === product._id);
-    if (!found) {
-      product.quantity = 1;
-      favouritesBooks.push(product);
-      updateFavouritesBooks(favouritesBooks);
-      //update cart badge
-      setState({
-        favouritesBooksCount: state.favouritesBooksCount + 1,
-        shoppingCartCount: state.shoppingCartCount,
-        shoppingCartTotal: getShoppingCartTotal(),
-        coupon: state.coupon,
-      });
-      //
-      toast.success(`Product added to favourites !`);
-    } else toast.error(`Product exist already in your favourites !`);
   };
 
   return (
@@ -97,10 +78,7 @@ export default function Home() {
                   }}
                 >
                   <ul className="featured__item__pic__hover">
-                    <li
-                      onClick={() => handleAddToFavourites(book)}
-                      className="cursor_pointer"
-                    >
+                    <li className="cursor_pointer">
                       <a>
                         <i className="fa fa-heart"></i>
                       </a>

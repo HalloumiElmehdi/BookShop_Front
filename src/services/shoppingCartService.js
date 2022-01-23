@@ -5,8 +5,8 @@ export function getCartBooks() {
   return JSON.parse(localStorage.getItem(shoppingCartKey)) || [];
 }
 
-export function updateCartBooks(Books) {
-  localStorage.setItem(shoppingCartKey, JSON.stringify(Books));
+export function updateCartBooks(books) {
+  localStorage.setItem(shoppingCartKey, JSON.stringify(books));
 }
 
 export function getShoppingCartCount() {
@@ -15,7 +15,7 @@ export function getShoppingCartCount() {
 
 export function getShoppingCartTotal() {
   return getCartBooks().reduce(
-    (acc, product) => acc + product.price * product.quantity,
+    (acc, book) => acc + book.price * book.quantity,
     0
   );
 }
