@@ -1,5 +1,5 @@
 import React, { createContext, useState } from "react";
-import { getCurrentUser } from "../services/authService";
+import auth from "../services/authService";
 import { getFavouritesBooksCount } from "../services/favouritesService";
 
 import {
@@ -13,7 +13,7 @@ export const AppContextProvider = (props) => {
   const [state, setState] = useState({
     shoppingCartCount: getShoppingCartCount(),
     favouritesProductsCount: getFavouritesBooksCount(),
-    user: getCurrentUser(),
+    user: auth.getCurrentUser(),
     shoppingCartTotal: getShoppingCartTotal(),
   });
   return (

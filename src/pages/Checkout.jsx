@@ -8,9 +8,8 @@ import {
 import Joi from "joi-browser";
 import Input from "../components/common/simpleinput";
 import Checkbox from "../components/common/check";
-import { register } from "../services/authService";
+import auth from "../services/authService";
 import { AppContext } from "../contexts/AppContext";
-import { getCurrentUser } from "../services/authService";
 import { toast } from "react-toastify";
 import sendEmail from "../services/emailService";
 
@@ -78,7 +77,7 @@ export default class Checkout extends Form {
     const userLocal = this.context[0].user;
     if (userLocal) {
       this.setState({ userLocal });
-      const user = getCurrentUser();
+      const user = auth.getCurrentUser();
       const data = {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -96,7 +95,7 @@ export default class Checkout extends Form {
   doSubmit = async () => {
     this.setState({ isloading: true });
     if (this.state.cartBooks.length > 0) {
-      !this.state.userLocal && register(this.state.data);
+      !this.state.userLocal && auth.register(this.state.data);
       try {
         const { data, cartBooks, total } = this.state;
         const { data: response } = await sendEmail({

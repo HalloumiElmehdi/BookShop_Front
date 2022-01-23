@@ -11,14 +11,15 @@ import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 
 export default function Home() {
-  const [shoppingCartProducts, setShoppingCartProducts] = useState([]);
-  const [favouritesProducts, setFavouritesProducts] = useState([]);
+  const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
+  const [favouritesBooks, setFavouritesBooks] = useState([]);
   const [books, setBooks] = useState([]);
 
   const [state, setState] = useContext(AppContext);
   useEffect(() => {
     async function fetchBooks() {
       const { data } = await getBooks();
+      console.log(data);
       setBooks(data);
     }
     fetchBooks();
@@ -34,16 +35,16 @@ export default function Home() {
   }, []);
 
   const handleAddToCart = (product) => {
-    const found = shoppingCartProducts.find((p) => p._id === product._id);
+    const found = shoppingCartBooks.find((p) => p._id === product._id);
 
     if (!found) {
       product.quantity = 1;
-      shoppingCartProducts.push(product);
-      updateCartBooks(shoppingCartProducts);
+      shoppingCartBooks.push(product);
+      updateCartBooks(shoppingCartBooks);
       //update cart badge
       setState({
         shoppingCartCount: state.shoppingCartCount + 1,
-        favouritesProductsCount: state.favouritesProductsCount,
+        favouritesBooksCount: state.favouritesBooksCount,
         shoppingCartTotal: getShoppingCartTotal(),
         coupon: state.coupon,
       });
@@ -53,14 +54,14 @@ export default function Home() {
   };
 
   const handleAddToFavourites = (product) => {
-    const found = favouritesProducts.find((p) => p._id === product._id);
+    const found = favouritesBooks.find((p) => p._id === product._id);
     if (!found) {
       product.quantity = 1;
-      favouritesProducts.push(product);
-      updateFavouritesBooks(favouritesProducts);
+      favouritesBooks.push(product);
+      updateFavouritesBooks(favouritesBooks);
       //update cart badge
       setState({
-        favouritesProductsCount: state.favouritesProductsCount + 1,
+        favouritesBooksCount: state.favouritesBooksCount + 1,
         shoppingCartCount: state.shoppingCartCount,
         shoppingCartTotal: getShoppingCartTotal(),
         coupon: state.coupon,

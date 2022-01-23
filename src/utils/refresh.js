@@ -1,5 +1,5 @@
 export function refresh(url) {
   setTimeout(() => {
-    //window.location = url;
+    window.location = url;
   }, 200);
 }

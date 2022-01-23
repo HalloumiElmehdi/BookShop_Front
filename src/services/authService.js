@@ -1,35 +1,44 @@
-import { getUsers, setUser } from "./userService";
-import nextId from "react-id-generator";
+import http from "./http";
+import jwtDecode from "jwt-decode";
+import { refresh } from "../utils/refresh";
 
-const tokenKey = "user";
+const apiEndpoint = "/login";
+const tokenKey = "x-auth-token";
 
-export function register(user) {
-  //add user to the localstorage liste
-  user._id = nextId();
-  setUser(user);
-  //add token to localstorage
-  localStorage.setItem(
-    tokenKey,
-    JSON.stringify({ user: user._id, email: user.email })
-  );
-  return user;
-}
-export function logOut() {
+http.setJwt(getJwt());
+
+const login = async ({ username, password }) => {
+  const { data: jwt } = await http.post(apiEndpoint, { username, password });
+  localStorage.setItem(tokenKey, jwt);
+};
+
+const logout = () => {
   localStorage.removeItem(tokenKey);
-}
-export function getCurrentUser() {
-  const token = JSON.parse(localStorage.getItem(tokenKey));
-  const users = getUsers();
-  return token ? users.find((user) => user._id === token.user) : null;
-}
-export function login({ email, password }) {
-  const user = getUsers().find((u) => u.email === email && u.password === password)
-  if (user) {
-    //add token to localstorage
-    localStorage.setItem(
-      tokenKey,
-      JSON.stringify({ user: user._id, email: user.email })
-    );
+};
+
+const getCurrentUser = () => {
+  try {
+    const jwt = localStorage.getItem(tokenKey);
+    if (jwtDecode(jwt).exp < Date.now() / 1000) {
+      localStorage.removeItem("x-auth-token");
+      refresh("/");
+    }
+
+    return jwtDecode(jwt);
+  } catch (error) {
+    return null;
   }
-  return user;
+};
+
+function getJwt() {
+  return localStorage.getItem(tokenKey);
 }
+
+const auth = {
+  login,
+  logout,
+  getCurrentUser,
+  getJwt,
+};
+
+export default auth;

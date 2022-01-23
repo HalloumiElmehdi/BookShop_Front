@@ -1,13 +1,11 @@
 import axios from "axios";
 import { apiUrl } from "../config.json";
+import { refresh } from "../utils/refresh";
 
 axios.defaults.baseURL = apiUrl;
-
 axios.defaults.headers.common["Accept"] = "application/json";
-axios.defaults.headers.put["Content-Type"] = "application/json";
-axios.defaults.headers.get["Content-Type"] = "application/json";
-axios.defaults.headers.post["Content-Type"] = "application/json";
-axios.defaults.headers.delete["Content-Type"] = "application/json";
+axios.defaults.headers.common["Content-Type"] = "application/json";
+axios.defaults.headers.common["Authorization"] = "";
 
 // Add a response interceptor
 axios.interceptors.response.use(null, (error) => {
@@ -17,19 +15,22 @@ axios.interceptors.response.use(null, (error) => {
     error.response.status < 500;
 
   if (!expectedError) {
-    console.log("error network");
-    //window.location = "/";
+    // refresh("/network-error");
+    console.log(error);
   }
   return Promise.reject(error);
 });
 
-console.log("api URL : ", apiUrl);
+function setJwt(jwt) {
+  axios.defaults.headers.common["x-auth-token"] = jwt;
+}
 
 const http = {
   post: axios.post,
   get: axios.get,
   put: axios.put,
   delete: axios.delete,
+  setJwt,
 };
 
 export default http;

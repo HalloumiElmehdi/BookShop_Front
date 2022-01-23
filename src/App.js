@@ -19,9 +19,9 @@ import ShopPage from "./pages/Shop";
 import ShopDetailsPage from "./pages/ShopDetails";
 import ShopCartPage from "./pages/ShoppingCart";
 import CheckoutPage from "./pages/Checkout";
-import LoginPage from "./pages/Login";
+import LoginRegisterPage from "./pages/LoginRegister";
 
-import { getCurrentUser } from "./services/authService";
+import auth from "./services/authService";
 
 //AppContext state
 import { AppContextProvider } from "./contexts/AppContext";
@@ -30,9 +30,9 @@ import { AppContextProvider } from "./contexts/AppContext";
 import { seed } from "./seeder";
 
 export default function App() {
-  const [user, setUser] = useState(getCurrentUser());
+  const [user, setUser] = useState(auth.getCurrentUser());
   useEffect(() => {
-    const loaded = localStorage.getItem("load");
+    /* const loaded = localStorage.getItem("load");
     !loaded && seed();
     const toastMsg = localStorage.getItem("toast");
     if (toast) {
@@ -40,7 +40,7 @@ export default function App() {
         toast(toastMsg);
         deleteToast();
       }, 1000);
-    }
+    }*/
   }, []);
   return (
     <AppContextProvider>
@@ -58,8 +58,10 @@ export default function App() {
         draggable
       />
       <PreLoader />
+
       <main>
         <Switch>
+          <Route path="/login" exact component={LoginRegisterPage} />
           <Route path="/" exact component={HomePage} />
           <Route path="/shop" exact component={ShopPage} />
           <Route
@@ -69,7 +71,6 @@ export default function App() {
           />
           <Route path="/shopping-cart" exact component={ShopCartPage} />
           <Route path="/checkout" exact component={CheckoutPage} />
-          <Route path="/login" exact component={LoginPage} />
           <Route
             path="/not-found"
             exact
@@ -78,6 +79,7 @@ export default function App() {
           <Redirect to="/not-found" />
         </Switch>
       </main>
+
       <Footer />
     </AppContextProvider>
   );
