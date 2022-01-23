@@ -1,0 +1,12 @@
+{
+    "HOME": "/",
+    "LOGIN": "/login",
+    "SHOP": "/shop",
+    "SHOP_DETAILS": "/shopping-details",
+    "SHOP_CART": "/shopping-cart",
+    "BLOG": "/blog",
+    "CONTACT": "/contact",
+    "ABOUT_US": "/about-us",
+    "CHECKOUT": "/checkout",
+    "BLOG_DETAILS": "/blog-details"
+}
