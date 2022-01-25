@@ -1,18 +1,19 @@
-import { Component } from "react";
-import { refresh } from "../utils/refresh";
-import auth from "../services/auth";
+import React, { useEffect } from "react";
+import auth from "../services/authService";
 import { setToast } from "../utils/toasts";
+import { refresh } from "../utils/refresh";
+import { useState } from "react/cjs/react.development";
+import PreLoader from "./PreLoader";
 
-class Logout extends Component {
-  componentDidMount() {
-    auth.logout();
-    setToast("Disconnected");
-    refresh("/");
-  }
-
-  render() {
-    return null;
-  }
+export default function Logout() {
+  const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    setIsLoading(true);
+    setTimeout(() => {
+      auth.logout();
+      setToast("Disconnected");
+      refresh("/");
+    }, 1000);
+  });
+  return isLoading ? <PreLoader /> : null;
 }
-
-export default Logout;

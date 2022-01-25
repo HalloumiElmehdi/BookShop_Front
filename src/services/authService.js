@@ -5,10 +5,7 @@ import { refresh } from "../utils/refresh";
 const apiEndpoint = "/login";
 const tokenKey = "Authorization";
 
-http.setJwt(getJwt());
-
 const login = async ({ username, password }) => {
-  console.log(username + "  " + password);
   const { data: jwt } = await http.post(apiEndpoint, { username, password });
   localStorage.setItem(tokenKey, jwt.token);
 };
@@ -21,7 +18,7 @@ const getCurrentUser = () => {
   try {
     const jwt = localStorage.getItem(tokenKey);
     if (jwtDecode(jwt).exp < Date.now() / 1000) {
-      localStorage.removeItem("Authorization");
+      localStorage.removeItem(tokenKey);
       refresh("/");
     }
 

@@ -63,6 +63,10 @@ class Form extends Component {
     else data.multipleChoices.splice(data.multipleChoices.indexOf(id), 1);
   };
 
+  handleKeyPress = (e) => {
+    if (!this.validate() && e.key === "Enter") this.doSubmit();
+  };
+
   renderSubmitBtn = (label, isloading) => {
     return (
       <button

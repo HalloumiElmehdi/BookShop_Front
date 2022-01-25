@@ -1,7 +1,7 @@
 import React from "react";
 import ReactPaginate from "react-paginate";
 let pageCount = 0;
-function Pagination({ onPageChange }) {
+function Pagination({ onPageChange, ...Rest }) {
   return (
     <ReactPaginate
       previousLabel={"← Previous"}
@@ -20,6 +20,7 @@ function Pagination({ onPageChange }) {
       nextLinkClassName={"link page-link"}
       activeClassName={"active"}
       activeLinkClassName={"active-page-link"}
+      {...Rest}
     />
   );
 }

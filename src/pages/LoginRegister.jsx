@@ -7,8 +7,11 @@ import { setToast } from "../utils/toasts";
 import { refresh } from "../utils/refresh";
 import $ from "jquery";
 import { Redirect } from "react-router-dom";
+import { AppContext } from "../contexts/AppContext";
+import { getCurrentUserData } from "../services/userService";
 
 export default class LoginRegister extends Form {
+  static AppContext = AppContext;
   state = {
     userLocal: null,
     data: {
@@ -40,14 +43,20 @@ export default class LoginRegister extends Form {
 
   doSubmit = async () => {
     try {
-      const result = await auth.login(this.state.data);
-      setToast("Connected");
+      this.setState({ isloading: true });
+      await auth.login(this.state.data);
+      setToast("Welcome back !");
       refresh("/");
     } catch (ex) {
-      if (ex.response && ex.response.status === 400) {
+      if (
+        ex.response &&
+        ex.response.status >= 400 &&
+        ex.response.status < 500
+      ) {
+        this.setState({ isloading: false });
         const errors = { ...this.state.errors };
-        errors.email = ex.response.data;
-        errors.password = ex.response.data;
+        errors.username = ex.response.data.message;
+        errors.password = ex.response.data.message;
         this.setState({ errors });
       }
     }
@@ -79,8 +88,8 @@ export default class LoginRegister extends Form {
                           label="Username"
                           value={data.username}
                           onChange={this.handleChange}
-                          error={errors.email}
-                          isIdle={idles.email}
+                          error={errors.username}
+                          isIdle={idles.username}
                         />
                       </div>
                       <div className="form-group">
@@ -92,9 +101,10 @@ export default class LoginRegister extends Form {
                           onChange={this.handleChange}
                           error={errors.password}
                           isIdle={idles.password}
+                          onKeyPress={this.handleKeyPress}
                         />
                       </div>
-                      <div className="form-group">
+                      <div style={{ width: "95%", margin: "10px" }}>
                         {this.renderSubmitBtn("login", isloading)}
                       </div>
                     </div>

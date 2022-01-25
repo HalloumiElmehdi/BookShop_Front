@@ -17,7 +17,7 @@ export default function Footer() {
               <ul>
                 <li>Oujda Morocco</li>
                 <li>Phone: +212 10 20 30</li>
-                <li>merchfinder.contact@gmail.com</li>
+                <li>elibrary.contact@gmail.com</li>
               </ul>
             </div>
           </div>

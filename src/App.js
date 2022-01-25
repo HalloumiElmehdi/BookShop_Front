@@ -20,6 +20,7 @@ import ShopCartPage from "./pages/ShoppingCart";
 import CheckoutPage from "./pages/Checkout";
 import LoginRegisterPage from "./pages/LoginRegister";
 import ErrorPage from "./pages/Error";
+import LogoutPage from "./pages/Logout";
 
 // Services
 import auth from "./services/authService";
@@ -31,9 +32,10 @@ export default function App() {
   const [user, setUser] = useState(auth.getCurrentUser());
   useEffect(() => {
     const toastMsg = localStorage.getItem("toast");
+
     if (toast) {
       setTimeout(() => {
-        toast(toastMsg);
+        toast.success(toastMsg);
         deleteToast();
       }, 1000);
     }
@@ -43,23 +45,21 @@ export default function App() {
       <Navbar user={user} />
       <Breadcrumb />
       <ToastContainer
-        position="top-center"
-        transition={Slide}
-        autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={false}
+        position="bottom-left"
+        autoClose={1500}
+        hideProgressBar={true}
+        newestOnTop={true}
         closeOnClick
-        rtl={false}
-        draggable
+        transition={Slide}
       />
-      <PreLoader />
       <main>
         <Switch>
-          <Route path="/login" exact component={LoginRegisterPage} />
           <Route path="/" exact component={HomePage} />
+          <Route path="/login" exact component={LoginRegisterPage} />
+          <Route path="/logout" exact component={LogoutPage} />
           <Route path="/shop" exact component={ShopPage} />
           <Route
-            path="/shopping-details/:id?"
+            path="/shopping-details/:id"
             exact
             component={ShopDetailsPage}
           />

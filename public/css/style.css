@@ -196,7 +196,8 @@ ol {
   top: 0;
   left: 0;
   z-index: 999999;
-  background: #000;
+  background-color: whitesmoke;
+  opacity: 0.5;
 }
 
 .loader {

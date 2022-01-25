@@ -5,13 +5,13 @@ import { getBooks } from "../services/bookService";
 import {
   getCartBooks,
   getShoppingCartTotal,
-  updateCartBooks,
 } from "../services/shoppingCartService";
 
 import { Link } from "react-router-dom";
 import Pagination, { paginate } from "../components/common/pagination";
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
+import PreLoader from "./PreLoader";
 
 const PER_PAGE = 8;
 
@@ -21,15 +21,20 @@ export default function Shop() {
   const [books, setBooks] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [state, setState] = useContext(AppContext);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     async function fetchBooks() {
+      setIsLoading(true);
       const { data } = await getBooks();
       setBooks(data);
       setFiltered(paginate(data, 0, PER_PAGE));
     }
     fetchBooks();
     setShoppingCartBooks(getCartBooks());
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   }, []);
 
   function handlePageClick({ selected: page }) {
@@ -44,43 +49,40 @@ export default function Shop() {
 
   const handleSearch = (keyWord) => {
     setKeyword(keyWord);
-    const filteredBooks = books.filter(
-      (book) => filterByTitle(book.title) || filterByAuthor(book.author)
-    );
+    if (keyWord === "") {
+      setFiltered(paginate(books, 0, PER_PAGE));
+    } else {
+      const filteredBooks = books.filter(
+        (book) => filterByTitle(book.title) || filterByAuthor(book.author)
+      );
 
-    setFiltered(paginate(filteredBooks, 0, PER_PAGE));
+      setFiltered(paginate(filteredBooks, 0, PER_PAGE));
+    }
   };
 
   const handleAddToCart = (book) => {
     if (!book.stock > 0) {
-      toast.error("product is out of stock", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      toast.warning("out of stock !");
       return;
     }
     const found = shoppingCartBooks.find((b) => b.id === book.id);
     if (!found) {
       book.quantity = 1;
       shoppingCartBooks.push(book);
-      updateCartBooks(shoppingCartBooks);
+      //updateCartBooks(shoppingCartBooks);
       //update cart badge
       setState({
         shoppingCartCount: state.shoppingCartCount + 1,
         shoppingCartTotal: getShoppingCartTotal(),
       });
       //
-      toast.success(`book added to your cart !`);
-    } else toast.error(`book exist already in your cart !`);
+      toast.success(`✓ added !`);
+    } else toast.warning("this product already axist in your cart !");
   };
 
   return (
     <Fragment>
+      {isLoading && <PreLoader />}
       <section className="book spad">
         <div className="container">
           <div className="row">

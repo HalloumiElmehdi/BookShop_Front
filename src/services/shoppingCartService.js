@@ -1,29 +1,40 @@
-const shoppingCartKey = "shopping_Cart";
+import { getCurrentUserData } from "./userService";
+import http from "./http";
 
 //Services functions
 export function getCartBooks() {
-  return JSON.parse(localStorage.getItem(shoppingCartKey)) || [];
+  return getCurrentUserData();
 }
 
-export function updateCartBooks(books) {
-  localStorage.setItem(shoppingCartKey, JSON.stringify(books));
+export function deleteOrderItem(id) {
+  return http.delete(`/order-items/${id}`);
 }
 
+export function patchOrderItemQuantity(qte, id) {
+  return http.patch(
+    `/order-items/${id}`,
+    { quantity: parseInt(qte) },
+    {
+      headers: {
+        "Content-Type": "application/merge-patch+json",
+      },
+    }
+  );
+}
 export function getShoppingCartCount() {
-  return getCartBooks().length;
+  try {
+    //const { data } = getCartBooks();
+    return 5; //data.cart.count;
+  } catch (error) {
+    return 0;
+  }
 }
 
 export function getShoppingCartTotal() {
-  return getCartBooks().reduce(
-    (acc, book) => acc + book.price * book.quantity,
-    0
-  );
-}
-
-export function getShoppingCartSubTotal() {
-  return getShoppingCartTotal() * 0.8;
-}
-
-export function emptyShoppingCart() {
-  localStorage.removeItem(shoppingCartKey);
+  try {
+    //const { data } = getCartBooks();
+    return 6; //data.cart.total;
+  } catch (error) {
+    return 0;
+  }
 }

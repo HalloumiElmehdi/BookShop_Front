@@ -1,12 +1,12 @@
 import axios from "axios";
 import { apiUrl } from "../config.json";
 import { refresh } from "../utils/refresh";
-import { useHistory } from "react-router-dom";
-import auth from "./authService";
 
 axios.defaults.baseURL = apiUrl;
 axios.defaults.headers.common["Accept"] = "application/json";
 axios.defaults.headers.common["Content-Type"] = "application/json";
+axios.defaults.headers.common["Authorization"] =
+  "Bearer " + localStorage.getItem("Authorization");
 
 // Add a response interceptor
 axios.interceptors.response.use(null, (error) => {
@@ -21,15 +21,14 @@ axios.interceptors.response.use(null, (error) => {
   return Promise.reject(error);
 });
 
-function setJwt(jwt) {
-  axios.defaults.headers.common["Authorization"] = "Bearer " + jwt;
-}
+function setJwt(jwt) {}
 
 const http = {
   post: axios.post,
   get: axios.get,
   put: axios.put,
   delete: axios.delete,
+  patch: axios.patch,
   setJwt,
 };
 

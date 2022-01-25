@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   getCartBooks,
   getShoppingCartTotal,
-  updateCartBooks,
 } from "../services/shoppingCartService";
 
 import { toast } from "react-toastify";
@@ -46,7 +45,7 @@ export default function ShopDetails() {
     if (!found) {
       book.quantity = quantity;
       shoppingCartBooks.push(book);
-      updateCartBooks(shoppingCartBooks);
+      //updateCartBooks(shoppingCartBooks);
       //update cart badge
       setState({
         shoppingCartCount: state.shoppingCartCount + 1,

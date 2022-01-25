@@ -15,19 +15,20 @@ import sendEmail from "../services/emailService";
 
 import { setToast } from "../utils/toasts";
 import { refresh } from "../utils/refresh";
+import { getCurrentUserData } from "../services/userService";
 
 export default class Checkout extends Form {
   static contextType = AppContext;
 
   state = {
-    userLocal: null,
+    user: null,
     data: {
       firstName: "",
       lastName: "",
       country: "",
       address: "",
       city: "",
-      zipCode: "",
+      postalcode: "",
       phone: "",
       email: "",
       cardNumber: "",
@@ -44,7 +45,7 @@ export default class Checkout extends Form {
       country: null,
       address: null,
       city: null,
-      zipCode: null,
+      postalcode: null,
       phone: null,
       email: null,
       password: null,
@@ -62,7 +63,7 @@ export default class Checkout extends Form {
     country: Joi.string().min(3).max(50).required().label("Country"),
     address: Joi.string().max(50).required().label("Address"),
     city: Joi.string().min(3).max(50).required().label("City"),
-    zipCode: Joi.number().required().label("ZipCode"),
+    postalcode: Joi.number().required().label("postalcode"),
     phone: Joi.number().required().label("Phone"),
     email: Joi.string().email().required().label("Email"),
     password: Joi.any(),
@@ -73,23 +74,40 @@ export default class Checkout extends Form {
     cvv: Joi.string().min(3).max(3).required().label("cvv"),
   };
 
-  componentDidMount() {
-    const userLocal = this.context[0].user;
-    if (userLocal) {
-      this.setState({ userLocal });
-      const user = auth.getCurrentUser();
+  fetchCurrentUserData = async () => {
+    try {
+      const { data: user } = await getCurrentUserData();
+      console.log(user);
+      this.setState({ user });
+      const { firstname: firstName, lastname: lastName, email } = user;
+      const { city, country, postalcode, adressline1, adressline2, phone } =
+        user.userAddresses[0];
+
       const data = {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        country: user.country,
-        address: user.address,
-        city: user.city,
-        zipCode: user.zipCode,
-        phone: user.phone,
-        email: user.email,
+        firstName,
+        lastName,
+        country,
+        address: `${adressline1} ${adressline2}`,
+        city,
+        postalcode,
+        phone,
+        email,
+        cardNumber: "",
+        expireMonth: "",
+        expireYear: "",
+        cvv: "",
+        password: "",
+        orderNotes: "",
       };
+
       this.setState({ data });
+    } catch (error) {
+      console.log("error: ", error);
     }
+  };
+
+  componentDidMount() {
+    this.fetchCurrentUserData();
   }
 
   doSubmit = async () => {
@@ -107,7 +125,7 @@ export default class Checkout extends Form {
           total: total,
           orderNotes: data.orderNotes,
         });
-        emptyShoppingCart();
+
         setToast(
           `'${response}' Purchase confirmed ! verify your inbox for invoice details`
         );
@@ -152,7 +170,7 @@ export default class Checkout extends Form {
       cartBooks,
       total,
       createAccount,
-      userLocal,
+      user,
       isloading,
     } = this.state;
 
@@ -185,7 +203,7 @@ export default class Checkout extends Form {
                         onChange={this.handleChange}
                         error={errors.firstName}
                         isIdle={idles.firstName}
-                        disabled={true && userLocal}
+                        disabled={true && user}
                       />
                     </div>
                     <div className="col-lg-6">
@@ -197,7 +215,7 @@ export default class Checkout extends Form {
                         onChange={this.handleChange}
                         error={errors.lastName}
                         isIdle={idles.lastName}
-                        disabled={true && userLocal}
+                        disabled={true && user}
                       />
                     </div>
                   </div>
@@ -210,6 +228,7 @@ export default class Checkout extends Form {
                     type="text"
                     isIdle={idles.country}
                     onChange={this.handleChange}
+                    disabled={true && user}
                   />
                   <Input
                     name="city"
@@ -218,6 +237,7 @@ export default class Checkout extends Form {
                     error={errors.city}
                     isIdle={idles.city}
                     onChange={this.handleChange}
+                    disabled={true && user}
                   />
                   <Input
                     name="address"
@@ -229,13 +249,13 @@ export default class Checkout extends Form {
                     isIdle={idles.address}
                   />
                   <Input
-                    name="zipCode"
-                    type="number"
+                    name="postalcode"
+                    type="text"
                     label="Postcode / ZIP"
-                    value={data.zipCode}
+                    value={data.postalcode}
                     onChange={this.handleChange}
-                    error={errors.zipCode}
-                    isIdle={idles.zipCode}
+                    error={errors.postalcode}
+                    isIdle={idles.postalcode}
                   />
                   <div className="row">
                     <div className="col-lg-6">
@@ -247,6 +267,7 @@ export default class Checkout extends Form {
                         onChange={this.handleChange}
                         error={errors.phone}
                         isIdle={idles.phone}
+                        disabled={true && user}
                       />
                     </div>
                     <div className="col-lg-6">
@@ -258,7 +279,7 @@ export default class Checkout extends Form {
                         onChange={this.handleChange}
                         error={errors.email}
                         isIdle={idles.email}
-                        disabled={true && userLocal}
+                        disabled={true && user}
                       />
                     </div>
                   </div>
@@ -308,7 +329,7 @@ export default class Checkout extends Form {
                       />
                     </div>
                   </div>
-                  {!userLocal && (
+                  {!user && (
                     <Fragment>
                       <Checkbox
                         label="Create an account?"
@@ -363,7 +384,7 @@ export default class Checkout extends Form {
                     <div className="checkout__order__total">
                       Total <span>${total.toFixed(2)}</span>
                     </div>
-                    {!userLocal && (
+                    {!user && (
                       <Fragment>
                         <Checkbox
                           label="Create an account?"
