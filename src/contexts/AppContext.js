@@ -1,16 +1,19 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import auth from "../services/authService";
-
-import { getShoppingCartCount } from "../services/shoppingCartService";
+import {
+  getShopCartCount,
+  getShopCartTotal,
+} from "../services/shoppingCartService";
 
 export const AppContext = createContext();
 
 export const AppContextProvider = (props) => {
   const [state, setState] = useState({
-    shoppingCartCount: getShoppingCartCount(),
-    user: auth.getCurrentUser(),
-    shoppingCartTotal: 0,
+    count: getShopCartCount(),
+    user: null,
+    total: getShopCartTotal(),
   });
+
   return (
     <AppContext.Provider value={[state, setState]}>
       {props.children}

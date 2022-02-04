@@ -1,40 +1,42 @@
-import { getCurrentUserData } from "./userService";
-import http from "./http";
+const shoppingCartKey = "shoppingCart";
 
 //Services functions
-export function getCartBooks() {
-  return getCurrentUserData();
+export function getShopCart() {
+  return JSON.parse(localStorage.getItem(shoppingCartKey)) || [];
 }
 
-export function deleteOrderItem(id) {
-  return http.delete(`/order-items/${id}`);
+export function updateShopCart(products) {
+  localStorage.setItem(shoppingCartKey, JSON.stringify(products));
 }
 
-export function patchOrderItemQuantity(qte, id) {
-  return http.patch(
-    `/order-items/${id}`,
-    { quantity: parseInt(qte) },
-    {
-      headers: {
-        "Content-Type": "application/merge-patch+json",
-      },
-    }
+export function emptyShoppingCart() {
+  localStorage.removeItem(shoppingCartKey);
+}
+
+export function getShopCartTotal() {
+  let total = 0;
+  getShopCart().items.forEach(
+    (item) => (total += item.quantity * item.book.price)
+  );
+  return total;
+}
+
+export function getShopCartCount() {
+  let count = 0;
+  getShopCart().items.forEach((item) => (count += item.quantity));
+  return count;
+}
+
+export function init() {
+  localStorage.setItem(
+    shoppingCartKey,
+    JSON.stringify({
+      items: [],
+      total: 0,
+    })
   );
 }
-export function getShoppingCartCount() {
-  try {
-    //const { data } = getCartBooks();
-    return 5; //data.cart.count;
-  } catch (error) {
-    return 0;
-  }
-}
 
-export function getShoppingCartTotal() {
-  try {
-    //const { data } = getCartBooks();
-    return 6; //data.cart.total;
-  } catch (error) {
-    return 0;
-  }
+export function exist() {
+  return JSON.parse(localStorage.getItem(shoppingCartKey));
 }

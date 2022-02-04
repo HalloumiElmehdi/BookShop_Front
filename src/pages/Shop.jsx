@@ -1,27 +1,27 @@
 import React, { useState, useEffect, useContext, Fragment } from "react";
 
 import { getBooks } from "../services/bookService";
-
-import {
-  getCartBooks,
-  getShoppingCartTotal,
-} from "../services/shoppingCartService";
-
 import { Link } from "react-router-dom";
 import Pagination, { paginate } from "../components/common/pagination";
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 import PreLoader from "./PreLoader";
+import {
+  getShopCart,
+  getShopCartCount,
+  getShopCartTotal,
+  updateShopCart,
+} from "../services/shoppingCartService";
 
 const PER_PAGE = 8;
 
 export default function Shop() {
-  const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
+  const [state, setState] = useContext(AppContext);
   const [keyWord, setKeyword] = useState("");
   const [books, setBooks] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [state, setState] = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(false);
+  const [shoppingCart, setshoppingCart] = useState(getShopCart());
 
   useEffect(() => {
     async function fetchBooks() {
@@ -29,18 +29,15 @@ export default function Shop() {
       const { data } = await getBooks();
       setBooks(data);
       setFiltered(paginate(data, 0, PER_PAGE));
+      setIsLoading(false);
     }
     fetchBooks();
-    setShoppingCartBooks(getCartBooks());
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
   }, []);
 
+  //#region pagination  | filtering by keyword searched
   function handlePageClick({ selected: page }) {
     setFiltered(paginate(books, page, PER_PAGE));
   }
-
   const filterByTitle = (title) =>
     title.trim().toLowerCase().includes(keyWord.trim().toLowerCase());
 
@@ -59,26 +56,34 @@ export default function Shop() {
       setFiltered(paginate(filteredBooks, 0, PER_PAGE));
     }
   };
+  //#endregion
 
+  //#region cart operations
   const handleAddToCart = (book) => {
-    if (!book.stock > 0) {
-      toast.warning("out of stock !");
-      return;
+    const index = shoppingCart.items
+      ? shoppingCart.items.findIndex((i) => i.book.id === book.id)
+      : -1;
+    if (index !== -1) {
+      shoppingCart.items[index].quantity++;
+    } else {
+      const item = {
+        book,
+        quantity: 1,
+      };
+      shoppingCart.items.push(item);
+      shoppingCart.total = shoppingCart.total + item.book.price * item.quantity;
     }
-    const found = shoppingCartBooks.find((b) => b.id === book.id);
-    if (!found) {
-      book.quantity = 1;
-      shoppingCartBooks.push(book);
-      //updateCartBooks(shoppingCartBooks);
-      //update cart badge
-      setState({
-        shoppingCartCount: state.shoppingCartCount + 1,
-        shoppingCartTotal: getShoppingCartTotal(),
-      });
-      //
-      toast.success(`✓ added !`);
-    } else toast.warning("this product already axist in your cart !");
+    updateShopCart(shoppingCart);
+
+    setState({
+      count: getShopCartCount(),
+      total: getShopCartTotal(),
+    });
+
+    //
+    toast.success(`☑ success`);
   };
+  //#endregion
 
   return (
     <Fragment>
@@ -126,7 +131,10 @@ export default function Shop() {
                   <div className="col-lg-4 col-md-4">
                     <div className="filter__found">
                       <h6>
-                        <span>{filtered.length}</span> Book(s) found
+                        <span>
+                          {keyWord !== "" ? filtered.length : books.length}
+                        </span>
+                        {"Books Found"}
                       </h6>
                     </div>
                   </div>

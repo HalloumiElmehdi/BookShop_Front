@@ -1,61 +1,64 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
-import {
-  getCartBooks,
-  getShoppingCartTotal,
-} from "../services/shoppingCartService";
-
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 import { getBookById } from "../services/bookService";
 
+import {
+  getShopCart,
+  getShopCartCount,
+  getShopCartTotal,
+  updateShopCart,
+} from "../services/shoppingCartService";
+
 export default function ShopDetails() {
+  const [state, setState] = useContext(AppContext);
+  const [book, setBook] = useState();
+  const [quantity, setQuantity] = useState(1);
+  const [shoppingCart, setshoppingCart] = useState(getShopCart());
+
   const pathname = window.location.pathname;
   const bookID = pathname.split("/")[2];
-  const [book, setBook] = useState();
-  const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
-  const [state, setState] = useContext(AppContext);
-  const [quantity, setQuantity] = useState(1);
 
+  //#region  useEffect
   useEffect(() => {
-    setShoppingCartBooks(getCartBooks());
     async function fetchBook() {
       const { data } = await getBookById(bookID);
+      console.log(data);
       setBook(data);
     }
     fetchBook();
-
-    console.log(book);
   }, []);
 
+  //#endregion
+
+  //#region shopping cart operations
   const handleAddToCart = (book) => {
-    if (!book.stock > 0) {
-      toast.error("product is out of stock", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-      return;
+    const index = shoppingCart.items
+      ? shoppingCart.items.findIndex((i) => i.book.id === book.id)
+      : -1;
+    if (index !== -1) {
+      shoppingCart.items[index].quantity += parseInt(quantity);
+    } else {
+      const item = {
+        book,
+        quantity,
+      };
+      shoppingCart.items.push(item);
+      shoppingCart.total = shoppingCart.total + item.book.price * item.quantity;
     }
-    const found = shoppingCartBooks.find((b) => b.id === book.id);
-    if (!found) {
-      book.quantity = quantity;
-      shoppingCartBooks.push(book);
-      //updateCartBooks(shoppingCartBooks);
-      //update cart badge
-      setState({
-        shoppingCartCount: state.shoppingCartCount + 1,
-        favouritesBooksCount: state.favouritesBooksCount,
-        shoppingCartTotal: getShoppingCartTotal(),
-      });
-      //
-      toast.success(`Product added to your cart !`);
-    } else toast.error(`Product exist already in your cart !`);
+
+    updateShopCart(shoppingCart);
+    //update cart badge
+    setState({
+      count: getShopCartCount(),
+      total: getShopCartTotal(),
+    });
+
+    //
+    toast.success(`☑ success`);
   };
+  //#endregion
 
   return (
     <section className="product-details spad">
@@ -98,11 +101,25 @@ export default function ShopDetails() {
               <div className="product__details__quantity">
                 <div className="quantity">
                   <div className="pro-qty">
+                    <span
+                      className="inc qtybtn"
+                      onClick={() =>
+                        setQuantity(quantity > 1 ? quantity - 1 : quantity)
+                      }
+                    >
+                      -
+                    </span>
                     <input
                       type="text"
                       value={quantity}
                       onChange={({ target }) => setQuantity(target.value)}
                     />
+                    <span
+                      className="dec qtybtn"
+                      onClick={() => setQuantity(quantity + 1)}
+                    >
+                      +
+                    </span>
                   </div>
                 </div>
               </div>

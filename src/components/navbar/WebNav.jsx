@@ -2,10 +2,12 @@ import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppContext } from "../../contexts/AppContext";
 import { useLocation } from "react-router-dom";
+import { useEffect } from "react/cjs/react.development";
 
-export default function WebNav() {
+export default function WebNav({ user }) {
   const [state, setState] = useContext(AppContext);
-  const [currentRoute, setCurrentRoute] = useState(useLocation().pathname);
+  const [currentRoute, setCurrentRoute] = useState("/");
+
   return (
     <header className="header">
       <div className="header__top">
@@ -38,9 +40,9 @@ export default function WebNav() {
                     <i className="fa fa-pinterest-p"></i>
                   </Link>
                 </div>
-                {state.user && (
+                {user && (
                   <div className="header__top__right__language">
-                    <div>{state.user.username}</div>
+                    <div>{user.username}</div>
                     <span className="arrow_carrot-down"></span>
                     <ul>
                       <li>
@@ -61,7 +63,7 @@ export default function WebNav() {
                     </ul>
                   </div>
                 )}
-                {!state.user && (
+                {!user && (
                   <div className="header__top__right__auth">
                     <Link to="/login">
                       <i className="fa fa-user"></i> Login / Register
@@ -85,19 +87,29 @@ export default function WebNav() {
           <div className="col-lg-8">
             <nav className="header__menu">
               <ul>
-                <li className={currentRoute === "/" ? "active" : ""}>
+                <li
+                  className={currentRoute === "/" ? "active" : ""}
+                  onClick={() => setCurrentRoute("/")}
+                >
                   <Link to="/">Home</Link>
                 </li>
-                <li className={currentRoute === "/shop" ? "active" : ""}>
+                <li
+                  className={currentRoute === "/shop" ? "active" : ""}
+                  onClick={() => setCurrentRoute("/shop")}
+                >
                   <Link to="/shop">Shop</Link>
                 </li>
 
                 <li
                   className={currentRoute === "/shopping-cart" ? "active" : ""}
+                  onClick={() => setCurrentRoute("/shopping-cart")}
                 >
                   <Link to="/shopping-cart">Shopping Cart</Link>
                 </li>
-                <li className={currentRoute === "/checkout" ? "active" : ""}>
+                <li
+                  className={currentRoute === "/checkout" ? "active" : ""}
+                  onClick={() => setCurrentRoute("/checkout")}
+                >
                   <Link to="/checkout">Check Out</Link>
                 </li>
               </ul>
@@ -111,18 +123,15 @@ export default function WebNav() {
                     <i
                       className="fa fa-shopping-bag fa-lg fa-beat"
                       title="Go to shopping Cart"
+                      onClick={() => setCurrentRoute("/shopping-cart")}
                     ></i>{" "}
-                    <span>{state.shoppingCartCount}</span>
+                    <span>{parseInt(state.count)}</span>
                   </Link>
                 </li>
               </ul>
               <div className="header__cart__price">
                 <span title="Total Shopping Cart">
-                  $
-                  {(
-                    state.shoppingCartTotal *
-                    (state.coupon ? 1 - state.coupon.value : 1)
-                  ).toFixed(2)}
+                  ${state.total.toFixed(2)}
                 </span>
               </div>
             </div>

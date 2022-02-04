@@ -21,14 +21,13 @@ const getCurrentUser = () => {
       localStorage.removeItem(tokenKey);
       refresh("/");
     }
-
     return jwtDecode(jwt);
   } catch (error) {
     return null;
   }
 };
 
-function getJwt() {
+export function getJwt() {
   return localStorage.getItem(tokenKey);
 }
 

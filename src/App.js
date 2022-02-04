@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Route, Switch, Redirect } from "react-router-dom";
 
 // Toasts
@@ -7,7 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { deleteToast } from "./utils/toasts";
 
 // Layout
-import Navbar from "./components/navbar/Navbar";
+import WebNav from "./components/navbar/WebNav";
 import Footer from "./components/Footer";
 import PreLoader from "./pages/PreLoader";
 import Breadcrumb from "./components/breadcrumb";
@@ -26,13 +26,22 @@ import LogoutPage from "./pages/Logout";
 import auth from "./services/authService";
 
 //AppContext state
-import { AppContextProvider } from "./contexts/AppContext";
+import { AppContext, AppContextProvider } from "./contexts/AppContext";
+import {
+  exist,
+  getShopCartCount,
+  getShopCartTotal,
+  getShoppingCart,
+  init,
+  initShoppingCart,
+} from "./services/shoppingCartService";
 
 export default function App() {
   const [user, setUser] = useState(auth.getCurrentUser());
   useEffect(() => {
-    const toastMsg = localStorage.getItem("toast");
+    !exist() && init();
 
+    const toastMsg = localStorage.getItem("toast");
     if (toast) {
       setTimeout(() => {
         toast.success(toastMsg);
@@ -42,7 +51,7 @@ export default function App() {
   }, []);
   return (
     <AppContextProvider>
-      <Navbar user={user} />
+      <WebNav user={user} />
       <Breadcrumb />
       <ToastContainer
         position="bottom-left"

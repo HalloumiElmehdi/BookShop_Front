@@ -1,51 +1,66 @@
 import React, { useEffect, useState, useContext, Fragment } from "react";
 import { Link } from "react-router-dom";
-import { getShoppingCartTotal } from "../services/shoppingCartService";
-
 import { getBooks } from "../services/bookService";
 import { toast } from "react-toastify";
 import { AppContext } from "../contexts/AppContext";
 import PreLoader from "./PreLoader";
+import auth from "../services/authService";
+import {
+  getShopCart,
+  getShopCartTotal,
+  getShopCartCount,
+  updateShopCart,
+} from "../services/shoppingCartService";
 
 export default function Home() {
-  const [shoppingCartBooks, setShoppingCartBooks] = useState([]);
+  const [state, setState] = useContext(AppContext);
+  const [shoppingCart, setshoppingCart] = useState(getShopCart());
   const [isLoading, setIsLoading] = useState(false);
   const [books, setBooks] = useState([]);
 
-  const [state, setState] = useContext(AppContext);
+  //#region useEffect
   useEffect(() => {
     async function fetchBooks() {
       setIsLoading(true);
       const { data } = await getBooks();
       const featured = data.slice(0, 8);
       setBooks(featured);
+      setIsLoading(false);
     }
     fetchBooks();
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
   }, []);
 
-  const handleAddToCart = (book) => {
-    if (!book.stock > 0) {
-      toast.error("out of stock !");
-      return;
-    }
-    const found = shoppingCartBooks.find((b) => b.id === book.id);
+  //#endregion
 
-    if (!found) {
-      book.quantity = 1;
-      shoppingCartBooks.push(book);
-      //updateCartBooks(shoppingCartBooks);
-      //update cart badge
-      setState({
-        shoppingCartCount: state.shoppingCartCount + 1,
-        shoppingCartTotal: getShoppingCartTotal(),
-      });
-      //
-      toast.success(`✓ added !`);
-    } else toast.error(`Product exist already in your cart !`);
+  //#region  handle cart operations
+
+  const handleAddToCart = (book) => {
+    const index = shoppingCart.items
+      ? shoppingCart.items.findIndex((i) => i.book.id === book.id)
+      : -1;
+    if (index !== -1) {
+      shoppingCart.items[index].quantity++;
+    } else {
+      const item = {
+        book,
+        quantity: 1,
+      };
+      shoppingCart.items.push(item);
+      shoppingCart.total = shoppingCart.total + item.book.price * item.quantity;
+    }
+    updateShopCart(shoppingCart);
+
+    //update cart badge
+    setState({
+      count: getShopCartCount(),
+      total: getShopCartTotal(),
+    });
+
+    //
+    toast.success(`☑ success`);
   };
+
+  //#endregion
 
   return (
     <Fragment>

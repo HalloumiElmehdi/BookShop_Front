@@ -1,30 +1,31 @@
 import React, { Fragment } from "react";
 import { Link } from "react-router-dom";
 import Form from "../components/common/form";
-import {
-  getCartBooks,
-  emptyShoppingCart,
-} from "../services/shoppingCartService";
 import Joi from "joi-browser";
 import Input from "../components/common/simpleinput";
 import Checkbox from "../components/common/check";
 import auth from "../services/authService";
 import { AppContext } from "../contexts/AppContext";
 import { toast } from "react-toastify";
-import sendEmail from "../services/emailService";
-
 import { setToast } from "../utils/toasts";
 import { refresh } from "../utils/refresh";
+import { getShopCart, getShopCartTotal } from "../services/shoppingCartService";
+import {
+  placeOrder,
+  submitShopCartWithRegister,
+} from "../services/orderService";
 import { getCurrentUserData } from "../services/userService";
 
 export default class Checkout extends Form {
   static contextType = AppContext;
 
+  //#region  state and schema
   state = {
     user: null,
+    shoppingCart: getShopCart(),
     data: {
-      firstName: "",
-      lastName: "",
+      firstname: "",
+      lastname: "",
       country: "",
       address: "",
       city: "",
@@ -40,8 +41,8 @@ export default class Checkout extends Form {
     },
     errors: {},
     idles: {
-      firstName: null,
-      lastName: null,
+      firstname: null,
+      lastname: null,
       country: null,
       address: null,
       city: null,
@@ -51,15 +52,15 @@ export default class Checkout extends Form {
       password: null,
       orderNotes: null,
     },
-    cartBooks: getCartBooks(),
-    total: this.context[0].shoppingCartTotal,
+    cartBooks: [],
     createAccount: false,
     isloading: false,
+    total: getShopCartTotal(),
   };
 
   schema = {
-    firstName: Joi.string().min(5).max(50).required().label("First Name"),
-    lastName: Joi.string().min(5).max(50).required().label("Last Name"),
+    firstname: Joi.string().min(5).max(50).required().label("First Name"),
+    lastname: Joi.string().min(5).max(50).required().label("Last Name"),
     country: Joi.string().min(3).max(50).required().label("Country"),
     address: Joi.string().max(50).required().label("Address"),
     city: Joi.string().min(3).max(50).required().label("City"),
@@ -67,40 +68,43 @@ export default class Checkout extends Form {
     phone: Joi.number().required().label("Phone"),
     email: Joi.string().email().required().label("Email"),
     password: Joi.any(),
-    orderNotes: Joi.string().min(10).max(40).required().label("Order Notes"),
+    orderNotes: Joi.string().min(8).max(40).required().label("Order Notes"),
     cardNumber: Joi.string().min(14).max(14).required().label("Card Number"),
     expireMonth: Joi.number().min(1).max(12).required().label("Expire Month"),
     expireYear: Joi.string().min(4).max(4).required().label("Year"),
     cvv: Joi.string().min(3).max(3).required().label("cvv"),
   };
 
+  //#endregion
+
   fetchCurrentUserData = async () => {
     try {
       const { data: user } = await getCurrentUserData();
-      console.log(user);
-      this.setState({ user });
-      const { firstname: firstName, lastname: lastName, email } = user;
-      const { city, country, postalcode, adressline1, adressline2, phone } =
-        user.userAddresses[0];
+      if (user) {
+        this.setState({ user });
+        const { firstname: firstname, lastname: lastname, email } = user;
+        const { city, country, postalcode, adressline1, adressline2, phone } =
+          user.userAddresses[0];
 
-      const data = {
-        firstName,
-        lastName,
-        country,
-        address: `${adressline1} ${adressline2}`,
-        city,
-        postalcode,
-        phone,
-        email,
-        cardNumber: "",
-        expireMonth: "",
-        expireYear: "",
-        cvv: "",
-        password: "",
-        orderNotes: "",
-      };
+        const data = {
+          firstname,
+          lastname,
+          country,
+          address: `${adressline1} ${adressline2}`,
+          city,
+          postalcode,
+          phone,
+          email,
+          cardNumber: "",
+          expireMonth: "",
+          expireYear: "",
+          cvv: "",
+          password: "",
+          orderNotes: "",
+        };
 
-      this.setState({ data });
+        this.setState({ data });
+      }
     } catch (error) {
       console.log("error: ", error);
     }
@@ -111,34 +115,31 @@ export default class Checkout extends Form {
   }
 
   doSubmit = async () => {
-    this.setState({ isloading: true });
-    if (this.state.cartBooks.length > 0) {
-      !this.state.userLocal && auth.register(this.state.data);
+    if (!this.state.user) {
       try {
-        const { data, cartBooks, total } = this.state;
-        const { data: response } = await sendEmail({
-          to: data.email,
-          clientName: `${data.firstName} ${data.lastName}`,
-          clientPhone: data.phone,
-          clientAddress: data.address,
-          Books: cartBooks,
-          total: total,
-          orderNotes: data.orderNotes,
-        });
-
-        setToast(
-          `'${response}' Purchase confirmed ! verify your inbox for invoice details`
+        this.setState({ isloading: true });
+        const { data: response } = await submitShopCartWithRegister(
+          this.state.shoppingCart.items,
+          this.state.data
         );
+
+        console.log("reponse: ", response);
+        const { email, password } = this.state.data;
+        await auth.login({ username: email, password });
+        const { data } = await placeOrder(response.cart.id);
+
+        setToast("☑ success");
         refresh("/");
+
+        this.setState({ isloading: false });
       } catch (error) {
-        if (error && error.response.status === 500) {
-          toast("Something went wrong !");
-          this.setState({ isloading: false });
-        }
+        this.setState({ isloading: false });
+        console.log(error);
       }
     } else {
-      toast("You cant checkout an empty cart");
-      this.setState({ isloading: false });
+      try {
+        this.setState({ isloading: true });
+      } catch (error) {}
     }
   };
 
@@ -146,7 +147,7 @@ export default class Checkout extends Form {
     const { checked } = target;
     if (checked) {
       this.schema.password = Joi.string()
-        .min(10)
+        .min(8)
         .max(40)
         .required()
         .label("password");
@@ -167,7 +168,7 @@ export default class Checkout extends Form {
       data,
       errors,
       idles,
-      cartBooks,
+      shoppingCart,
       total,
       createAccount,
       user,
@@ -196,25 +197,25 @@ export default class Checkout extends Form {
                   <div className="row">
                     <div className="col-lg-6">
                       <Input
-                        name="firstName"
+                        name="firstname"
                         type="text"
                         label="First Name"
-                        value={data.firstName}
+                        value={data.firstname}
                         onChange={this.handleChange}
-                        error={errors.firstName}
-                        isIdle={idles.firstName}
+                        error={errors.firstname}
+                        isIdle={idles.firstname}
                         disabled={true && user}
                       />
                     </div>
                     <div className="col-lg-6">
                       <Input
-                        name="lastName"
+                        name="lastname"
                         type="text"
                         label="Last Name"
-                        value={data.lastName}
+                        value={data.lastname}
                         onChange={this.handleChange}
-                        error={errors.lastName}
-                        isIdle={idles.lastName}
+                        error={errors.lastname}
+                        isIdle={idles.lastname}
                         disabled={true && user}
                       />
                     </div>
@@ -374,10 +375,10 @@ export default class Checkout extends Form {
                       Books <span>Total</span>
                     </div>
                     <ul>
-                      {cartBooks.map((book) => (
-                        <li key={book.id}>
-                          {book.title}{" "}
-                          <span>${book.price * book.quantity}</span>
+                      {shoppingCart.items.map((item) => (
+                        <li key={item.book.id}>
+                          {item.book.title}{" "}
+                          <span>${item.book.price * item.quantity}</span>
                         </li>
                       ))}
                     </ul>
